@@ -1,0 +1,162 @@
+---
+// 1. ИМПОРТИРУЕМ НОВЫЕ МЕТОДЫ
+import { getCollection, render } from 'astro:content';
+
+// 2. ЗАБИРАЕМ ЗАМЕТКИ ИЗ КОЛЛЕКЦИИ 'blog'
+// Фильтруем: оставляем только те, где publish: true
+const allPosts = await getCollection('blog', ({ data }) => {
+  return data.publish === true;
+});
+
+// 3. СОРТИРУЕМ (новые сверху)
+const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new Date(a.data.created).valueOf());
+---
+
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Мой Микроблог</title>
+  
+  <!-- Подключаем стили карты Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  
+  <style>
+    /* Базовые стили страницы */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      background-color: #f0f2f5;
+    }
+
+    #map {
+      width: 100%;
+      height: 50vh;
+      z-index: 1;
+    }
+
+    #feed {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .post-card {
+      background: white;
+      padding: 15px;
+      border-radius: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .post-card:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      transform: translateY(-2px);
+    }
+
+    .post-content {
+      flex: 1;
+      padding-right: 15px;
+    }
+
+    .post-meta {
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 8px;
+      display: flex;
+      gap: 15px;
+    }
+
+    .km-badge {
+      font-weight: bold;
+      color: #007bff;
+    }
+
+    .post-text {
+      font-size: 15px;
+      line-height: 1.5;
+      color: #333;
+    }
+
+    .post-thumb {
+      width: 80px;
+      height: 80px;
+      background: #eee;
+      border-radius: 8px;
+      display: none;
+      background-size: cover;
+      background-position: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="map"></div>
+
+  <div id="feed">
+    {posts.map(async (post) => {
+      // Форматируем дату для красивого вывода
+      const date = new Date(post.data.created);
+      const timeStr = date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+      const dateStr = date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+
+      
+      // Рендерим текст заметки из Markdown в HTML
+      const { Content } = await render(post);
+
+      return (
+        <div class="post-card" data-km={post.data.km}>
+          <div class="post-content">
+            <div class="post-meta">
+              <span>{dateStr}, {timeStr}</span>
+              {post.data.km && <span class="km-badge">КМ: {post.data.km}</span>}
+            </div>
+            <div class="post-text"><Content /></div>
+          </div>
+          <div class="post-thumb"></div>
+        </div>
+      );
+    })}
+  </div>
+  
+    <!-- СКРИПТЫ КАРТЫ -->
+  <!-- Добавляем is:inline, чтобы Astro не ломал порядок загрузки -->
+  <script is:inline src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.7.0/gpx.min.js"></script>
+  
+  <script is:inline>
+    // Инициализируем карту
+    const map = L.map('map').setView([55.75, 37.61], 10);
+
+    // Добавляем слой дороги
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    // Загружаем наш GPX трек
+    const gpxTrack = new L.GPX('/route.gpx', {
+      async: true,
+      marker_options: {
+        startIconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.7.0/pin-icon-start.png',
+        endIconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.7.0/pin-icon-end.png', 
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.7.0/pin-shadow.png'
+      }
+    }).on('loaded', function(e) {
+      // Когда трек загрузился, подгоняем карту под его размеры
+      map.fitBounds(e.target.getBounds());
+    }).addTo(map);
+  </script>
+
+</body>
+</html>
