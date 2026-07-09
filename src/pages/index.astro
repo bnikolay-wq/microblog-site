@@ -130,33 +130,121 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     })}
   </div>
   
-    <!-- СКРИПТЫ КАРТЫ -->
-  <!-- Добавляем is:inline, чтобы Astro не ломал порядок загрузки -->
+      <!-- СКРИПТЫ КАРТЫ -->
   <script is:inline src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.7.0/gpx.min.js"></script>
   
   <script is:inline>
-    // Инициализируем карту
-    const map = L.map('map').setView([55.75, 37.61], 10);
+        const map = L.map('map').setView([55.75, 37.61], 10);
+      let initialBounds = null;
+      let initialZoom = null; // <--- ДОБАВИЛИ ЭТО
 
-    // Добавляем слой дороги
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
 
-    // Загружаем наш GPX трек
-    const gpxTrack = new L.GPX('/route.gpx', {
+    const markers = {};
+
+    // 1. ВИЗУАЛЬНАЯ ОТРИСОВКА ТРЕКА (Оставляем как было, чтобы синяя линия была)
+    new L.GPX('/route.gpx', {
       async: true,
       marker_options: {
         startIconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.7.0/pin-icon-start.png',
         endIconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.7.0/pin-icon-end.png', 
         shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.7.0/pin-shadow.png'
       }
-    }).on('loaded', function(e) {
-      // Когда трек загрузился, подгоняем карту под его размеры
+        }).on('loaded', function(e) {
       map.fitBounds(e.target.getBounds());
+      initialBounds = e.target.getBounds();
+      initialZoom = map.getZoom(); // <--- ДОБАВИЛИ ЭТО
     }).addTo(map);
-  </script>
 
+    // 2. БРОНЕБОЙНОЕ ЧТЕНИЕ ТОЧЕК: Сами скачиваем и парсим XML
+    fetch('/route.gpx')
+      .then(response => response.text())
+      .then(gpxText => {
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(gpxText, "text/xml");
+        
+        // Ищем стандартные теги точек трека в GPX
+        const trkpts = xmlDoc.querySelectorAll('trkpt');
+        console.log("1. Найдено точек в GPX файле:", trkpts.length);
+        
+        if (trkpts.length === 0) {
+          console.log("ОШИБКА: В файле нет точек <trkpt>. Возможно, трек сохранен в другом формате.");
+          return;
+        }
+
+        // Собираем координаты в массив, понятный Leaflet
+        let trackPoints = [];
+        trkpts.forEach(pt => {
+          const lat = parseFloat(pt.getAttribute('lat'));
+          const lon = parseFloat(pt.getAttribute('lon'));
+          if (!isNaN(lat) && !isNaN(lon)) {
+            trackPoints.push(L.latLng(lat, lon));
+          }
+        });
+
+        // 3. ФУНКЦИЯ ПОИСКА КИЛОМЕТРА
+        function getCoordsAtKm(targetKm) {
+          if (!targetKm || trackPoints.length === 0) return null;
+          
+          let totalDist = 0;
+          const targetDistMeters = targetKm * 1000;
+          
+          for (let i = 1; i < trackPoints.length; i++) {
+            const distBetween = trackPoints[i-1].distanceTo(trackPoints[i]);
+            
+            if (totalDist + distBetween >= targetDistMeters) {
+              console.log(`2. Найден КМ ${targetKm}!`);
+              return trackPoints[i];
+            }
+            totalDist += distBetween;
+          }
+          console.log(`2. КМ ${targetKm} НЕ найден. Общая длина трека: ${Math.round(totalDist/1000)} км.`);
+          return null;
+        }
+
+        // 4. РАССТАНОВКА МАРКЕРОВ
+        const postCards = document.querySelectorAll('.post-card[data-km]');
+        console.log("3. Найдено карточек с data-km:", postCards.length);
+
+        postCards.forEach(card => {
+          const km = parseFloat(card.getAttribute('data-km'));
+          
+          if (!isNaN(km)) {
+            const coords = getCoordsAtKm(km);
+            
+                        if (coords) {
+              const marker = L.circleMarker(coords, {
+                radius: 4, // Было 8, стало 4 (в два раза меньше)
+                fillColor: "#007bff",
+                color: "#fff",
+                weight: 1, // Сделал белую обводку чуть тоньше для маленькой точки
+                opacity: 1,
+                fillOpacity: 0.8
+              }).addTo(map);
+              
+              // Убрали marker.bindPopup, больше никакой плашки!
+              markers[km] = marker;
+
+              card.addEventListener('mouseenter', () => {
+                // Увеличиваем точку
+                marker.setStyle({ radius: 6 }); 
+                // Летим к точке. Зум всегда х2 от изначального
+                const targetZoom = initialZoom ? initialZoom + 2 : 14;
+                map.flyTo(coords, targetZoom, { duration: 0.5 });
+              });
+
+              card.addEventListener('mouseleave', () => {
+                // При уходе мышки: возвращаем исходный размер
+                marker.setStyle({ radius: 4 }); 
+              });
+            }
+          }
+        });
+      })
+      .catch(err => console.error("Ошибка загрузки GPX:", err));
+  </script>
 </body>
 </html>
