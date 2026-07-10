@@ -30,24 +30,30 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     padding: 0;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     display: flex;
-    flex-direction: column;
-    height: 100vh;
+    flex-direction: row; /* Размещаем элементы слева направо */
+    height: 100vh; /* Занимаем всю высоту экрана */
     background-color: #f0f2f5;
+    overflow: hidden; /* Запрещаем скролл всего сайта */
   }
 
+  /* Карта: зафиксирована слева */
   #map {
-    width: 100%;
-    height: 50vh;
+    width: 60%; /* Ширина карты 60% */
+    height: 100vh; /* Высота на весь экран */
     z-index: 1;
+    flex-shrink: 0; /* Чтобы карта не сжималась */
   }
 
+  /* Лента заметок: справа с собственным скроллом */
   #feed {
-    flex: 1;
-    overflow-y: auto;
+    width: 40%; /* Ширина ленты 40% */
+    height: 100vh; /* Высота на весь экран */
+    overflow-y: auto; /* ВАЖНО: скроллится только лента */
     padding: 20px;
     display: flex;
     flex-direction: column;
     gap: 15px;
+    box-sizing: border-box; /* Чтобы padding не увеличивал ширину сверх 40% */
   }
 
   .post-card {
@@ -69,8 +75,7 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
 
   .post-content {
     flex: 1;
-    /* Обязательно: чтобы картинка не вылезала за пределы текстового блока */
-    overflow: hidden; 
+    overflow: hidden;
     padding-right: 15px;
   }
 
@@ -93,14 +98,14 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     color: #333;
   }
 
-  /* МАГИЯ КАРТИНОК: Превью справа */
+  /* Превью картинок */
   .post-text img {
-    width: 120px;       /* Фиксированная ширина превью */
-    height: 120px;      /* Фиксированная высота (делаем квадрат) */
-    object-fit: cover;  /* Обрезаем картинку, чтобы она заполнила квадрат без искажений */
-    float: right;       /* Прижимаем вправо */
-    margin-left: 15px;  /* Отступ от текста слева */
-    margin-bottom: 5px; /* Небольшой отступ снизу */
+    width: 120px;
+    height: 120px;
+    object-fit: cover;
+    float: right;
+    margin-left: 15px;
+    margin-bottom: 5px;
     border-radius: 8px;
     cursor: pointer;
     transition: transform 0.2s ease;
@@ -108,6 +113,21 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
 
   .post-text img:hover {
     transform: scale(1.05);
+  }
+
+  /* Мобильная адаптация: на телефонах возвращаем вид сверху-вниз */
+  @media (max-width: 768px) {
+    body {
+      flex-direction: column;
+    }
+    #map {
+      width: 100%;
+      height: 50vh;
+    }
+    #feed {
+      width: 100%;
+      height: 50vh;
+    }
   }
 </style>
 </head>
