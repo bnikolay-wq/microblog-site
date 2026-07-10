@@ -228,11 +228,10 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
               // Убрали marker.bindPopup, больше никакой плашки!
               markers[km] = marker;
 
-              card.addEventListener('mouseenter', () => {
-                // Увеличиваем точку
+                card.addEventListener('mouseenter', () => {
                 marker.setStyle({ radius: 6 }); 
-                // Летим к точке. Зум всегда х2 от изначального
-                const targetZoom = initialZoom ? initialZoom + 2 : 14;
+                const autoZoom = initialZoom ? initialZoom + 2 : 14;
+                const targetZoom = Math.max(map.getZoom(), autoZoom);
                 map.flyTo(coords, targetZoom, { duration: 0.5 });
               });
 
