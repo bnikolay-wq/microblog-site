@@ -16,11 +16,13 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Мой Микроблог</title>
+  <title>dalekodolgo - микроблог</title>
   
   <!-- Подключаем стили карты Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  
+    <!-- Подключаем стили Lightbox для картинок -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" />
+
   <style>
     /* Базовые стили страницы */
     body {
@@ -98,6 +100,19 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
       background-size: cover;
       background-position: center;
     }
+        /* Правила для картинок внутри текста заметки */
+    .post-text img {
+      max-width: 100%; /* Никогда не вылезать за пределы карточки */
+      height: auto; /* Сохранять пропорции */
+      border-radius: 8px; /* Скруглить углы, как у карточки */
+      margin-top: 10px; /* Немного отступа сверху от текста */
+      cursor: pointer; /* Показать пальчик при наведении, намекая, что можно нажать */
+      transition: transform 0.2s ease;
+    }
+
+    .post-text img:hover {
+      transform: scale(1.02); /* Чуть-чуть увеличивается при наведении мышкой */
+    }
   </style>
 </head>
 <body>
@@ -130,6 +145,9 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     })}
   </div>
   
+    <!-- Подключаем Lightbox для картинок -->
+  <script is:inline src="https://cdn.jsdelivr.net/gh/mcstudios/glightbox/dist/js/glightbox.min.js"></script>
+
       <!-- СКРИПТЫ КАРТЫ -->
   <script is:inline src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.7.0/gpx.min.js"></script>
@@ -244,6 +262,22 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
         });
       })
       .catch(err => console.error("Ошибка загрузки GPX:", err));
+
+      // Навешиваем Lightbox на все картинки в ленте
+      document.querySelectorAll('.post-text img').forEach(img => {
+        const src = img.getAttribute('src');
+      // Оборачиваем картинку в ссылку для Lightbox
+        const link = document.createElement('a');
+        link.setAttribute('href', src);
+        link.className = 'glightbox';
+        img.parentNode.insertBefore(link, img);
+        link.appendChild(img);
+      });
+      
+      const lightbox = GLightbox({
+        touchNavigation: true,
+        loop: true,
+      });   
   </script>
 </body>
 </html>
