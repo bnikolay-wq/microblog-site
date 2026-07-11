@@ -103,10 +103,16 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     line-height: 1;
   }
 
-  .post-text {
+    .post-text {
     font-size: 14px;
-    line-height: 1.4; /* Сделали текст плотнее (было 1.5) */
+    line-height: 1.4; 
     color: #111111;
+  }
+
+  /* ДОБАВЛЯЕМ ЭТО: Убираем воздух от Markdown-абзацев */
+  .post-text p {
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
   /* Превью картинок (Убрали воздух вокруг) */
