@@ -54,50 +54,50 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     padding: 6px; /* Убрали воздух почти в ноль */
     display: flex;
     flex-direction: column;
-    gap: 8px; /* Чуть добавили расстояния, чтобы бордер не слипался */
+    gap: 6px; /* Плотно друг к другу */
     box-sizing: border-box;
   }
 
   .post-card {
     background: white;
-    padding: 12px;
+    padding: 8px 10px; /* УЖАЛИ ВНУТРЕННИЙ ВОЗДУХ (было 12px) */
     border: 1px solid #e5e5e5; /* Тонкий бордер для разделения */
-    border-radius: 0 !important; /* Убрали скругления */
+    border-radius: 0 !important;
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    box-shadow: none; /* Убрали тень, заменяем бордером */
+    box-shadow: none;
     transition: all 0.2s ease;
     cursor: pointer;
   }
 
   .post-card:hover {
-    border-color: #cfcfcf; /* Бордер темнеет при наведении */
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04); /* Легкая тень при ховере */
+    border-color: #cfcfcf;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
     transform: translateY(-1px);
   }
 
   .post-content {
     flex: 1;
     overflow: hidden;
-    padding-right: 8px;
+    padding-right: 0; /* Убрали лишний отступ справа */
   }
 
   .post-meta {
     font-size: 12px;
     color: #8e8e93;
-    margin-bottom: 8px;
+    margin-bottom: 4px; /* Уменьшили расстояние от даты до текста (было 8px) */
     display: flex;
     align-items: center;
     gap: 8px;
   }
 
-  /* Плашка километра (совпадает с цветом трека) */
+  /* Плашка километра (Желтый фон, розовый текст) */
   .km-badge {
     background: #ffd900; /* Цвет линии трека */
-    color: #111111; /* Темный текст для читаемости на желтом */
+    color: #ff00dd; /* Розовый цвет метки на карте */
     padding: 3px 8px;
-    border-radius: 0 !important; /* Убрали скругления */
+    border-radius: 0 !important;
     font-size: 11px;
     font-weight: 600;
     line-height: 1;
@@ -105,19 +105,20 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
 
   .post-text {
     font-size: 14px;
-    line-height: 1.5;
+    line-height: 1.4; /* Сделали текст плотнее (было 1.5) */
     color: #111111;
   }
 
-  /* Превью картинок (100x100) */
+  /* Превью картинок (Убрали воздух вокруг) */
   .post-text img {
-    width: 100px; /* Было 120px */
-    height: 100px; /* Было 120px */
+    width: 100px; 
+    height: 100px; 
     object-fit: cover;
     float: right;
     margin-left: 10px;
-    margin-bottom: 2px;
-    border-radius: 0 !important; /* Убрали скругления */
+    margin-bottom: 0; /* УБРАЛИ ЛИШНИЙ ОТСТУП СНИЗУ (было 2px) */
+    margin-top: 2px;  /* Чуть опустили, чтобы ровно встала рядом с текстом, а не с датой */
+    border-radius: 0 !important;
     cursor: pointer;
     transition: transform 0.2s ease;
   }
@@ -126,7 +127,7 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     transform: scale(1.03);
   }
 
-  /* Скрываем стрелки в Lightbox, чтобы нельзя было листать */
+  /* Скрываем стрелки в Lightbox */
   .glightbox-container .gnext,
   .glightbox-container .gprev {
     display: none !important;
@@ -199,9 +200,9 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     new L.GPX('/route.gpx', {
       async: true,
       polyline_options: {
-        color: '#ffd900', // Цвет линии трека
-        weight: 4,        // Толщина
-        opacity: 0.8      // Прозрачность
+        color: '#ffd900',
+        weight: 4,        
+        opacity: 0.8      
       },
       marker_options: {
         startIconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.7.0/pin-icon-start.png',
@@ -259,8 +260,8 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
             
             if (coords) {
               const marker = L.circleMarker(coords, {
-                pane: 'markerPane', // Маркеры поверх трека
-                radius: 5,          // Базовый размер (из Save State)
+                pane: 'markerPane', 
+                radius: 5,          
                 fillColor: "#ff00dd",
                 color: "#fff",
                 weight: 1,
@@ -270,16 +271,12 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
               
               markers[km] = marker;
 
-              // Событие КЛИКА
               card.addEventListener('click', () => {
-                // Сбрасываем размер ВСЕХ маркеров до 5
                 for (let key in markers) {
                   markers[key].setStyle({ radius: 5 });
                 }
-                // Увеличиваем текущий маркер до 8
                 marker.setStyle({ radius: 8 }); 
                 
-                // Умный зум
                 const autoZoom = initialZoom ? initialZoom + 2 : 14;
                 const targetZoom = Math.max(map.getZoom(), autoZoom);
                 map.flyTo(coords, targetZoom, { duration: 0.5 });
@@ -302,7 +299,7 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
       link.appendChild(img);
     });
       
-    // Настройки Lightbox без листания
+    // Настройки Lightbox
     const lightbox = GLightbox({
       touchNavigation: false, 
       loop: false,
