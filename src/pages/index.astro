@@ -22,54 +22,57 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <!-- Подключаем стили Lightbox для картинок -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" />
+  <!-- ПОДКЛЮЧАЕМ ШРИФТ INTER -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
   <style is:global>
   /* Базовые стили страницы */
   body {
     margin: 0;
     padding: 0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     display: flex;
-    flex-direction: row; /* Размещаем элементы слева направо */
-    height: 100vh; /* Занимаем всю высоту экрана */
-    background-color: #f0f2f5;
-    overflow: hidden; /* Запрещаем скролл всего сайта */
+    flex-direction: row;
+    height: 100vh;
+    background-color: #f5f5f7; /* Чуть более холодный фон, как у Apple */
+    overflow: hidden;
   }
 
-  /* Карта: зафиксирована слева */
   #map {
-    width: 60%; /* Ширина карты 60% */
-    height: 100vh; /* Высота на весь экран */
+    width: 60%;
+    height: 100vh;
     z-index: 1;
-    flex-shrink: 0; /* Чтобы карта не сжималась */
+    flex-shrink: 0;
   }
 
-  /* Лента заметок: справа с собственным скроллом */
   #feed {
-    width: 40%; /* Ширина ленты 40% */
-    height: 100vh; /* Высота на весь экран */
-    overflow-y: auto; /* ВАЖНО: скроллится только лента */
-    padding: 20px;
+    width: 40%;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 30px; /* Чуть больше воздуха */
     display: flex;
     flex-direction: column;
-    gap: 15px;
-    box-sizing: border-box; /* Чтобы padding не увеличивал ширину сверх 40% */
+    gap: 20px; /* Больше расстояние между карточками */
+    box-sizing: border-box;
   }
 
   .post-card {
     background: white;
-    padding: 15px;
-    border-radius: 12px;
+    padding: 20px; /* Больше воздуха внутри карточки */
+    border-radius: 16px; /* Сильнее скруглим углы */
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    /* Убираем грубую тень, делаем мягкую, как у blocks.zone */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
     transition: all 0.2s ease;
     cursor: pointer;
   }
 
   .post-card:hover {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06);
     transform: translateY(-2px);
   }
 
@@ -80,22 +83,29 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
   }
 
   .post-meta {
-    font-size: 12px;
-    color: #888;
-    margin-bottom: 8px;
+    font-size: 13px; /* Чуть крупнее дата */
+    color: #8e8e93; /* Приглушенный серый для даты */
+    margin-bottom: 10px;
     display: flex;
-    gap: 15px;
+    align-items: center; /* Выравниваем по центру по высоте */
+    gap: 10px;
   }
 
+  /* МАГИЯ: Плашка километра в цвет маркера карты (#ff00dd) */
   .km-badge {
-    font-weight: bold;
-    color: #007bff;
+    background: rgba(255, 0, 221, 0.1); /* Светло-розовый фон (10% непрозрачности) */
+    color: #ff00dd; /* Цвет текста совпадает с маркером на карте */
+    padding: 4px 10px;
+    border-radius: 999px; /* Делаем форму "таблетки" */
+    font-size: 12px;
+    font-weight: 600; /* Полужирный текст */
+    line-height: 1;
   }
 
   .post-text {
     font-size: 15px;
-    line-height: 1.5;
-    color: #333;
+    line-height: 1.6;
+    color: #111111; /* Мягкий черный, не чистый #000 */
   }
 
   /* Превью картинок */
@@ -106,7 +116,7 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     float: right;
     margin-left: 15px;
     margin-bottom: 5px;
-    border-radius: 8px;
+    border-radius: 12px;
     cursor: pointer;
     transition: transform 0.2s ease;
   }
@@ -115,7 +125,7 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     transform: scale(1.05);
   }
 
-  /* Мобильная адаптация: на телефонах возвращаем вид сверху-вниз */
+  /* Мобильная адаптация */
   @media (max-width: 768px) {
     body {
       flex-direction: column;
