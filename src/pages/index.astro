@@ -157,7 +157,6 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
       const timeStr = date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
       const dateStr = date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
 
-      
       // Рендерим текст заметки из Markdown в HTML
       const { Content } = await render(post);
 
@@ -194,9 +193,14 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
 
     const markers = {};
 
-    // 1. ВИЗУАЛЬНАЯ ОТРИСОВКА ТРЕКА
+    // 1. ВИЗУАЛЬНАЯ ОТРИСОВКА ТРЕКА (Добавили прозрачность)
     new L.GPX('/route.gpx', {
       async: true,
+      polyline_options: {
+        color: '#00aaff', // Цвет линии трека
+        weight: 4,        // Толщина
+        opacity: 0.4      // Прозрачность (от 0 до 1)
+      },
       marker_options: {
         startIconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.7.0/pin-icon-start.png',
         endIconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.7.0/pin-icon-end.png', 
@@ -252,7 +256,9 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
             const coords = getCoordsAtKm(km);
             
             if (coords) {
+              // Маркеры поверх трека (pane: 'markerPane')
               const marker = L.circleMarker(coords, {
+                pane: 'markerPane', 
                 radius: 4,
                 fillColor: "#ff00dd",
                 color: "#fff",
@@ -263,9 +269,9 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
               
               markers[km] = marker;
 
-              // ИЗМЕНЕНИЕ: Событие КЛИКА вместо наведения мыши
+              // Событие КЛИКА
               card.addEventListener('click', () => {
-                // Сначала сбрасываем размер ВСЕХ маркеров до 4
+                // Сбрасываем размер ВСЕХ маркеров до 4
                 for (let key in markers) {
                   markers[key].setStyle({ radius: 4 });
                 }
@@ -295,10 +301,10 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
       link.appendChild(img);
     });
       
-    // ИЗМЕНЕНИЕ: Настройки Lightbox без листания
+    // Настройки Lightbox без листания
     const lightbox = GLightbox({
-      touchNavigation: false, // откл свайп
-      loop: false, // откл цикл
+      touchNavigation: false, 
+      loop: false,
       zoomable: false
     });
   </script>
