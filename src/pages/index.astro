@@ -3,7 +3,6 @@
 import { getCollection, render } from 'astro:content';
 
 // 2. ЗАБИРАЕМ ЗАМЕТКИ ИЗ КОЛЛЕКЦИИ 'blog'
-// Фильтруем: оставляем только те, где publish: true
 const allPosts = await getCollection('blog', ({ data }) => {
   return data.publish === true;
 });
@@ -18,17 +17,13 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>dalekodolgo - микроблог</title>
   
-  <!-- Подключаем стили карты Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <!-- Подключаем стили Lightbox для картинок -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" />
-  <!-- ПОДКЛЮЧАЕМ ШРИФТ INTER -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
   <style is:global>
-  /* Базовые стили страницы */
   body {
     margin: 0;
     padding: 0;
@@ -63,9 +58,10 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     padding: 8px 10px;
     border: 1px solid #e5e5e5;
     border-radius: 0 !important;
+    /* ИЗМЕНЕНИЕ: Выравниваем контент по центру высоты */
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: center; 
     box-shadow: none;
     transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
     cursor: pointer;
@@ -92,7 +88,6 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     gap: 8px;
   }
 
-  /* Плашка километра */
   .km-badge {
     background: #ffd900; 
     color: #ff00dd; 
@@ -107,46 +102,50 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     font-size: 14px;
     line-height: 1.4; 
     color: #111111;
-    /* МАГИЯ CSS GRID: убираем float, делаем колонки */
-    display: grid;
-    grid-template-columns: 1fr 100px; /* Текст занимает остаток, картинка жестко 100px */
-    gap: 10px;
-    align-items: center; /* Выравнивание по центру, чтобы не было воздуха */
   }
 
-  /* Убираем воздух от Markdown-абзацев */
   .post-text p {
     margin: 0 !important;
     padding: 0 !important;
   }
 
-  /* Если в абзаце есть картинка, отправляем её в правую колонку */
-  .post-text p:has(img) {
-    grid-column: 2;
+  /* ИЗМЕНЕНИЕ: Скрываем картинки там, где они рендерятся изначально */
+  .post-text img {
+    display: none;
   }
 
-  /* Превью картинок */
-  .post-text img {
+  /* Блок для картинки справа */
+  .post-thumb {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-left: 10px;
+    flex-shrink: 0;
+  }
+  
+  /* Если картинок нет, блок не занимает место */
+  .post-thumb:empty {
+    display: none;
+  }
+
+  .post-thumb img {
     width: 100px; 
     height: 100px; 
     object-fit: cover;
-    /* Убрали float и margin, т.к. теперь рулит Grid */
     border-radius: 0 !important;
     cursor: pointer;
     transition: transform 0.2s ease;
   }
 
-  .post-text img:hover {
+  .post-thumb img:hover {
     transform: scale(1.03);
   }
 
-  /* Скрываем стрелки в Lightbox */
   .glightbox-container .gnext,
   .glightbox-container .gprev {
     display: none !important;
   }
 
-  /* Мобильная адаптация */
   @media (max-width: 768px) {
     body {
       flex-direction: column;
@@ -168,12 +167,10 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
 
   <div id="feed">
     {posts.map(async (post) => {
-      // Форматируем дату для красивого вывода
       const date = new Date(post.data.created);
       const timeStr = date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
       const dateStr = date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
 
-      // Рендерим текст заметки из Markdown в HTML
       const { Content } = await render(post);
 
       return (
@@ -191,10 +188,7 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     })}
   </div>
   
-  <!-- Подключаем Lightbox для картинок -->
   <script is:inline src="https://cdn.jsdelivr.net/gh/mcstudios/glightbox/dist/js/glightbox.min.js"></script>
-
-  <!-- СКРИПТЫ КАРТЫ -->
   <script is:inline src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.7.0/gpx.min.js"></script>
   
@@ -209,7 +203,6 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
 
     const markers = {};
 
-    // 1. ВИЗУАЛЬНАЯ ОТРИСОВКА ТРЕКА
     new L.GPX('/route.gpx', {
       async: true,
       polyline_options: {
@@ -228,7 +221,6 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
       initialZoom = map.getZoom();
     }).addTo(map);
 
-    // 2. БРОНЕБОЙНОЕ ЧТЕНИЕ ТОЧЕК
     fetch('/route.gpx')
       .then(response => response.text())
       .then(gpxText => {
@@ -247,7 +239,6 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
           }
         });
 
-        // 3. ФУНКЦИЯ ПОИСКА КИЛОМЕТРА
         function getCoordsAtKm(targetKm) {
           if (!targetKm || trackPoints.length === 0) return null;
           let totalDist = 0;
@@ -262,7 +253,6 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
           return null;
         }
 
-        // 4. РАССТАНОВКА МАРКЕРОВ И ДВУСТОРОННЯЯ СВЯЗЬ
         const postCards = document.querySelectorAll('.post-card[data-km]');
 
         postCards.forEach(card => {
@@ -284,7 +274,6 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
               
               markers[km] = marker;
 
-              // СВЯЗЬ 1: Клик по карточке -> зум к метке
               card.addEventListener('click', () => {
                 for (let key in markers) {
                   markers[key].setStyle({ radius: 5 });
@@ -296,7 +285,6 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
                 map.flyTo(coords, targetZoom, { duration: 0.5 });
               });
 
-              // СВЯЗЬ 2: Клик по метке -> скролл ленты к карточке
               marker.on('click', () => {
                 for (let key in markers) {
                   markers[key].setStyle({ radius: 5 });
@@ -319,19 +307,33 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
       })
       .catch(err => console.error("Ошибка загрузки GPX:", err));
 
-    // Навешиваем Lightbox на все картинки в ленте
-    document.querySelectorAll('.post-text img').forEach(img => {
-      const src = img.getAttribute('src');
-      if (!src) return; 
-      const link = document.createElement('a');
-      link.setAttribute('href', src);
-      link.className = 'glightbox';
-      link.setAttribute('data-glightbox', 'type: image');
-      img.parentNode.insertBefore(link, img);
-      link.appendChild(img);
+    // ИЗМЕНЕНИЕ: Переносим картинки из текста в правый блок (post-thumb)
+    document.querySelectorAll('.post-card').forEach(card => {
+      const images = card.querySelectorAll('.post-text img');
+      const thumb = card.querySelector('.post-thumb');
+      
+      if (images.length > 0 && thumb) {
+        images.forEach(img => {
+          // Убираем скрытие, так как мы его перемещаем
+          img.style.display = 'block';
+          
+          // Оборачиваем в GLightbox
+          const src = img.getAttribute('src');
+          if (src) {
+            const link = document.createElement('a');
+            link.setAttribute('href', src);
+            link.className = 'glightbox';
+            link.setAttribute('data-glightbox', 'type: image');
+            
+            // Переносим картинку в ссылку, а ссылку в thumb
+            img.parentNode.insertBefore(link, img);
+            link.appendChild(img);
+            thumb.appendChild(link);
+          }
+        });
+      }
     });
       
-    // Настройки Lightbox
     const lightbox = GLightbox({
       touchNavigation: false, 
       loop: false,
