@@ -58,10 +58,10 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     padding: 8px 10px;
     border: 1px solid #e5e5e5;
     border-radius: 0 !important;
-    /* ИЗМЕНЕНИЕ: Выравниваем контент по центру высоты */
     display: flex;
     justify-content: space-between;
-    align-items: center; 
+    /* ИЗМЕНЕНИЕ: Растягиваем колонки на одинаковую высоту */
+    align-items: stretch; 
     box-shadow: none;
     transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
     cursor: pointer;
@@ -77,6 +77,9 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     flex: 1;
     overflow: hidden;
     padding-right: 0;
+    /* ИЗМЕНЕНИЕ: Делаем левую часть колонкой */
+    display: flex;
+    flex-direction: column;
   }
 
   .post-meta {
@@ -102,6 +105,10 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     font-size: 14px;
     line-height: 1.4; 
     color: #111111;
+    /* ИЗМЕНЕНИЕ: Текст занимает всё место и центрируется */
+    flex: 1;
+    display: flex;
+    align-items: center; /* Центр по вертикали */
   }
 
   .post-text p {
@@ -109,7 +116,7 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     padding: 0 !important;
   }
 
-  /* ИЗМЕНЕНИЕ: Скрываем картинки там, где они рендерятся изначально */
+  /* Скрываем картинки там, где они рендерятся изначально */
   .post-text img {
     display: none;
   }
@@ -121,9 +128,10 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     gap: 4px;
     margin-left: 10px;
     flex-shrink: 0;
+    /* Выравниваем картинки по центру, если карточка высокая из-за текста */
+    justify-content: center; 
   }
   
-  /* Если картинок нет, блок не занимает место */
   .post-thumb:empty {
     display: none;
   }
@@ -307,17 +315,15 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
       })
       .catch(err => console.error("Ошибка загрузки GPX:", err));
 
-    // ИЗМЕНЕНИЕ: Переносим картинки из текста в правый блок (post-thumb)
+    // Переносим картинки из текста в правый блок (post-thumb)
     document.querySelectorAll('.post-card').forEach(card => {
       const images = card.querySelectorAll('.post-text img');
       const thumb = card.querySelector('.post-thumb');
       
       if (images.length > 0 && thumb) {
         images.forEach(img => {
-          // Убираем скрытие, так как мы его перемещаем
           img.style.display = 'block';
           
-          // Оборачиваем в GLightbox
           const src = img.getAttribute('src');
           if (src) {
             const link = document.createElement('a');
@@ -325,7 +331,6 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
             link.className = 'glightbox';
             link.setAttribute('data-glightbox', 'type: image');
             
-            // Переносим картинку в ссылку, а ссылку в thumb
             img.parentNode.insertBefore(link, img);
             link.appendChild(img);
             thumb.appendChild(link);
