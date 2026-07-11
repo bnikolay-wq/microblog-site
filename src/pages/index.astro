@@ -252,7 +252,7 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
                         if (coords) {
               const marker = L.circleMarker(coords, {
                 radius: 4, // Было 8, стало 4 (в два раза меньше)
-                fillColor: "#007bff",
+                fillColor: "#ff00dd",
                 color: "#fff",
                 weight: 1, // Сделал белую обводку чуть тоньше для маленькой точки
                 opacity: 1,
