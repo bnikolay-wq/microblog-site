@@ -42,8 +42,22 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     flex-shrink: 0;
   }
 
+  /* НОВОЕ: Перетаскиваемый разделитель */
+  #resizer {
+    width: 6px;
+    background: #e5e5e5;
+    cursor: col-resize;
+    flex-shrink: 0;
+    z-index: 5;
+    transition: background 0.2s ease;
+  }
+
+  #resizer:hover, #resizer.active {
+    background: #ff00dd; /* Розовый цвет при наведении/перетаскивании */
+  }
+
   #feed {
-    width: 40%;
+    flex: 1; /* Занимает всё оставшееся место */
     height: 100vh;
     overflow-y: auto;
     padding: 6px;
@@ -60,7 +74,6 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     border-radius: 0 !important;
     display: flex;
     justify-content: space-between;
-    /* ИЗМЕНЕНИЕ: Растягиваем колонки на одинаковую высоту */
     align-items: stretch; 
     box-shadow: none;
     transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
@@ -77,7 +90,6 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     flex: 1;
     overflow: hidden;
     padding-right: 0;
-    /* ИЗМЕНЕНИЕ: Делаем левую часть колонкой */
     display: flex;
     flex-direction: column;
   }
@@ -105,10 +117,9 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     font-size: 14px;
     line-height: 1.4; 
     color: #111111;
-    /* ИЗМЕНЕНИЕ: Текст занимает всё место и центрируется */
     flex: 1;
     display: flex;
-    align-items: center; /* Центр по вертикали */
+    align-items: center;
   }
 
   .post-text p {
@@ -116,19 +127,16 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     padding: 0 !important;
   }
 
-  /* Скрываем картинки там, где они рендерятся изначально */
   .post-text img {
     display: none;
   }
 
-  /* Блок для картинки справа */
   .post-thumb {
     display: flex;
     flex-direction: column;
     gap: 4px;
     margin-left: 10px;
     flex-shrink: 0;
-    /* Выравниваем картинки по центру, если карточка высокая из-за текста */
     justify-content: center; 
   }
   
@@ -137,7 +145,7 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
   }
 
   .post-thumb img {
-    width: 60px; 
+    width: 60px;  /* ИЗ Save State: 60x60 */
     height: 60px; 
     object-fit: cover;
     border-radius: 0 !important;
@@ -154,6 +162,7 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     display: none !important;
   }
 
+  /* Мобильная адаптация */
   @media (max-width: 768px) {
     body {
       flex-direction: column;
@@ -161,6 +170,10 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     #map {
       width: 100%;
       height: 50vh;
+    }
+    /* На мобилке разделитель скрыт */
+    #resizer {
+      display: none;
     }
     #feed {
       width: 100%;
@@ -172,6 +185,9 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
 <body>
 
   <div id="map"></div>
+  
+  <!-- НОВЫЙ РАЗДЕЛИТЕЛЬ -->
+  <div id="resizer"></div>
 
   <div id="feed">
     {posts.map(async (post) => {
@@ -343,6 +359,42 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
       touchNavigation: false, 
       loop: false,
       zoomable: false
+    });
+
+    // НОВОЕ: ЛОГИКА ПЕРЕТАСКИВАНИЯ РАЗДЕЛИТЕЛЯ
+    const resizer = document.getElementById('resizer');
+    const mapEl = document.getElementById('map');
+    let isResizing = false;
+
+    resizer.addEventListener('mousedown', (e) => {
+      isResizing = true;
+      resizer.classList.add('active');
+      document.body.style.userSelect = 'none'; // Запрещаем выделение текста при перетаскивании
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!isResizing) return;
+      
+      // Вычисляем новый размер в процентах
+      const windowWidth = window.innerWidth;
+      let newWidth = (e.clientX / windowWidth) * 100;
+
+      // Ограничиваем: от 15% до 85%
+      if (newWidth < 15) newWidth = 15;
+      if (newWidth > 85) newWidth = 85;
+
+      mapEl.style.width = newWidth + '%';
+      
+      // Бронебойный фикс Leaflet: заставляем карту перерисоваться
+      map.invalidateSize();
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (isResizing) {
+        isResizing = false;
+        resizer.classList.remove('active');
+        document.body.style.userSelect = '';
+      }
     });
   </script>
 </body>
