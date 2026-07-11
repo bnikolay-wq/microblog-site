@@ -300,9 +300,9 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
                 // Скроллим ленту к нужной карточке (плавно и в центр)
                 card.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-                // Подсвечиваем карточку розовой рамкой
-                card.style.borderColor = '#ff00dd';
-                card.style.boxShadow = '0 0 0 2px #ff00dd';
+                // Подсвечиваем карточку полупрозрачной розовой рамкой
+                card.style.borderColor = 'rgba(255, 0, 221, 0.5)'; // 50% прозрачности
+                card.style.boxShadow = '0 0 8px rgba(255, 0, 221, 0.3)'; // Мягкое свечение 30%
                 
                 // Убираем подсветку через 1.5 секунды
                 setTimeout(() => {
