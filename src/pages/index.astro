@@ -35,11 +35,13 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     overflow: hidden;
   }
 
-  #map {
+    #map {
     width: 60%;
     height: 100vh;
     z-index: 1;
     flex-shrink: 0;
+    opacity: 0; /* ДОБАВИЛИ: скрываем карту до загрузки трека */
+    transition: opacity 0.5s ease; /* Плавное появление */
   }
 
   /* НОВОЕ: Перетаскиваемый разделитель */
@@ -243,6 +245,8 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
       map.fitBounds(e.target.getBounds());
       initialBounds = e.target.getBounds();
       initialZoom = map.getZoom();
+      // ДОБАВИЛИ СТРОКУ: показываем карту, когда она уже прыгнула на трек
+      document.getElementById('map').style.opacity = '1';
     }).addTo(map);
 
     fetch('/route.gpx')
