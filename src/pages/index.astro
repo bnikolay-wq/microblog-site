@@ -51,23 +51,23 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     width: 40%;
     height: 100vh;
     overflow-y: auto;
-    padding: 6px; /* Убрали воздух почти в ноль */
+    padding: 6px;
     display: flex;
     flex-direction: column;
-    gap: 6px; /* Плотно друг к другу */
+    gap: 6px;
     box-sizing: border-box;
   }
 
   .post-card {
     background: white;
-    padding: 8px 10px; /* УЖАЛИ ВНУТРЕННИЙ ВОЗДУХ (было 12px) */
-    border: 1px solid #e5e5e5; /* Тонкий бордер для разделения */
+    padding: 8px 10px;
+    border: 1px solid #e5e5e5;
     border-radius: 0 !important;
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     box-shadow: none;
-    transition: all 0.2s ease;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
     cursor: pointer;
   }
 
@@ -80,22 +80,22 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
   .post-content {
     flex: 1;
     overflow: hidden;
-    padding-right: 0; /* Убрали лишний отступ справа */
+    padding-right: 0;
   }
 
   .post-meta {
     font-size: 12px;
     color: #8e8e93;
-    margin-bottom: 4px; /* Уменьшили расстояние от даты до текста (было 8px) */
+    margin-bottom: 4px;
     display: flex;
     align-items: center;
     gap: 8px;
   }
 
-  /* Плашка километра (Желтый фон, розовый текст) */
+  /* Плашка километра */
   .km-badge {
-    background: #ffd900; /* Цвет линии трека */
-    color: #ff00dd; /* Розовый цвет метки на карте */
+    background: #ffd900; 
+    color: #ff00dd; 
     padding: 3px 8px;
     border-radius: 0 !important;
     font-size: 11px;
@@ -103,27 +103,27 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     line-height: 1;
   }
 
-    .post-text {
+  .post-text {
     font-size: 14px;
     line-height: 1.4; 
     color: #111111;
   }
 
-  /* ДОБАВЛЯЕМ ЭТО: Убираем воздух от Markdown-абзацев */
+  /* Убираем воздух от Markdown-абзацев */
   .post-text p {
     margin: 0 !important;
     padding: 0 !important;
   }
 
-  /* Превью картинок (Убрали воздух вокруг) */
+  /* Превью картинок */
   .post-text img {
     width: 100px; 
     height: 100px; 
     object-fit: cover;
     float: right;
     margin-left: 10px;
-    margin-bottom: 0; /* УБРАЛИ ЛИШНИЙ ОТСТУП СНИЗУ (было 2px) */
-    margin-top: 2px;  /* Чуть опустили, чтобы ровно встала рядом с текстом, а не с датой */
+    margin-bottom: 0;
+    margin-top: 2px;  
     border-radius: 0 !important;
     cursor: pointer;
     transition: transform 0.2s ease;
@@ -255,7 +255,7 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
           return null;
         }
 
-        // 4. РАССТАНОВКА МАРКЕРОВ И ЗУМ ПО КЛИКУ
+        // 4. РАССТАНОВКА МАРКЕРОВ И ДВУСТОРОННЯЯ СВЯЗЬ
         const postCards = document.querySelectorAll('.post-card[data-km]');
 
         postCards.forEach(card => {
@@ -277,6 +277,7 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
               
               markers[km] = marker;
 
+              // СВЯЗЬ 1: Клик по карточке -> зум к метке
               card.addEventListener('click', () => {
                 for (let key in markers) {
                   markers[key].setStyle({ radius: 5 });
@@ -286,6 +287,28 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
                 const autoZoom = initialZoom ? initialZoom + 2 : 14;
                 const targetZoom = Math.max(map.getZoom(), autoZoom);
                 map.flyTo(coords, targetZoom, { duration: 0.5 });
+              });
+
+              // СВЯЗЬ 2: Клик по метке -> скролл ленты к карточке
+              marker.on('click', () => {
+                // Увеличиваем маркер
+                for (let key in markers) {
+                  markers[key].setStyle({ radius: 5 });
+                }
+                marker.setStyle({ radius: 8 });
+
+                // Скроллим ленту к нужной карточке (плавно и в центр)
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                // Подсвечиваем карточку розовой рамкой
+                card.style.borderColor = '#ff00dd';
+                card.style.boxShadow = '0 0 0 2px #ff00dd';
+                
+                // Убираем подсветку через 1.5 секунды
+                setTimeout(() => {
+                  card.style.borderColor = '#e5e5e5';
+                  card.style.boxShadow = 'none';
+                }, 1500);
               });
             }
           }
