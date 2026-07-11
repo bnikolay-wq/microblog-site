@@ -273,10 +273,10 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
               card.addEventListener('click', () => {
                 // Сбрасываем размер ВСЕХ маркеров до 4
                 for (let key in markers) {
-                  markers[key].setStyle({ radius: 4 });
+                  markers[key].setStyle({ radius: 5 });
                 }
                 // Увеличиваем текущий маркер
-                marker.setStyle({ radius: 6 }); 
+                marker.setStyle({ radius: 8 }); 
                 
                 // Умный зум
                 const autoZoom = initialZoom ? initialZoom + 2 : 14;
