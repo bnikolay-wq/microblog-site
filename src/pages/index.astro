@@ -20,7 +20,7 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
   
   <!-- Подключаем стили карты Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- Подключаем стили Lightbox для картинок -->
+  <!-- Подключаем стили Lightbox для картинок -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" />
   <!-- ПОДКЛЮЧАЕМ ШРИФТ INTER -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -36,7 +36,7 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     display: flex;
     flex-direction: row;
     height: 100vh;
-    background-color: #f5f5f7; /* Чуть более холодный фон, как у Apple */
+    background-color: #f5f5f7;
     overflow: hidden;
   }
 
@@ -51,61 +51,60 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     width: 40%;
     height: 100vh;
     overflow-y: auto;
-    padding: 30px; /* Чуть больше воздуха */
+    padding: 6px; /* Убрали воздух почти в ноль */
     display: flex;
     flex-direction: column;
-    gap: 20px; /* Больше расстояние между карточками */
+    gap: 6px; /* Блоки плотно друг к другу */
     box-sizing: border-box;
   }
 
   .post-card {
     background: white;
-    padding: 20px; /* Больше воздуха внутри карточки */
-    border-radius: 16px; /* Сильнее скруглим углы */
+    padding: 12px; /* Уменьшили воздух внутри карточки */
+    border-radius: 0 !important; /* Убрали скругления */
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    /* Убираем грубую тень, делаем мягкую, как у blocks.zone */
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05); /* Минималистичная тень */
     transition: all 0.2s ease;
     cursor: pointer;
   }
 
   .post-card:hover {
-    box-shadow: 0 8px 24px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06);
-    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transform: translateY(-1px); /* Легкий подъем при ховере */
   }
 
   .post-content {
     flex: 1;
     overflow: hidden;
-    padding-right: 15px;
+    padding-right: 8px;
   }
 
   .post-meta {
-    font-size: 13px; /* Чуть крупнее дата */
-    color: #8e8e93; /* Приглушенный серый для даты */
-    margin-bottom: 10px;
+    font-size: 12px;
+    color: #8e8e93;
+    margin-bottom: 8px;
     display: flex;
-    align-items: center; /* Выравниваем по центру по высоте */
-    gap: 10px;
+    align-items: center;
+    gap: 8px;
   }
 
-  /* МАГИЯ: Плашка километра в цвет маркера карты (#ff00dd) */
+  /* Плашка километра */
   .km-badge {
-    background: rgba(255, 0, 221, 0.1); /* Светло-розовый фон (10% непрозрачности) */
-    color: #ff00dd; /* Цвет текста совпадает с маркером на карте */
-    padding: 4px 10px;
-    border-radius: 999px; /* Делаем форму "таблетки" */
-    font-size: 12px;
-    font-weight: 600; /* Полужирный текст */
+    background: rgba(255, 0, 221, 0.1);
+    color: #ff00dd;
+    padding: 3px 8px;
+    border-radius: 0 !important; /* Убрали скругления (строгий квадрат) */
+    font-size: 11px;
+    font-weight: 600;
     line-height: 1;
   }
 
   .post-text {
-    font-size: 15px;
-    line-height: 1.6;
-    color: #111111; /* Мягкий черный, не чистый #000 */
+    font-size: 14px;
+    line-height: 1.5;
+    color: #111111;
   }
 
   /* Превью картинок */
@@ -114,15 +113,21 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     height: 120px;
     object-fit: cover;
     float: right;
-    margin-left: 15px;
-    margin-bottom: 5px;
-    border-radius: 12px;
+    margin-left: 10px;
+    margin-bottom: 2px;
+    border-radius: 0 !important; /* Убрали скругления */
     cursor: pointer;
     transition: transform 0.2s ease;
   }
 
   .post-text img:hover {
-    transform: scale(1.05);
+    transform: scale(1.03);
+  }
+
+  /* Скрываем стрелки в Lightbox, чтобы нельзя было листать */
+  .glightbox-container .gnext,
+  .glightbox-container .gprev {
+    display: none !important;
   }
 
   /* Мобильная адаптация */
@@ -171,17 +176,17 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     })}
   </div>
   
-    <!-- Подключаем Lightbox для картинок -->
+  <!-- Подключаем Lightbox для картинок -->
   <script is:inline src="https://cdn.jsdelivr.net/gh/mcstudios/glightbox/dist/js/glightbox.min.js"></script>
 
-      <!-- СКРИПТЫ КАРТЫ -->
+  <!-- СКРИПТЫ КАРТЫ -->
   <script is:inline src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.7.0/gpx.min.js"></script>
   
   <script is:inline>
-        const map = L.map('map').setView([55.75, 37.61], 10);
-      let initialBounds = null;
-      let initialZoom = null; // <--- ДОБАВИЛИ ЭТО
+    const map = L.map('map').setView([55.75, 37.61], 10);
+    let initialBounds = null;
+    let initialZoom = null;
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -189,7 +194,7 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
 
     const markers = {};
 
-    // 1. ВИЗУАЛЬНАЯ ОТРИСОВКА ТРЕКА (Оставляем как было, чтобы синяя линия была)
+    // 1. ВИЗУАЛЬНАЯ ОТРИСОВКА ТРЕКА
     new L.GPX('/route.gpx', {
       async: true,
       marker_options: {
@@ -197,29 +202,22 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
         endIconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.7.0/pin-icon-end.png', 
         shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.7.0/pin-shadow.png'
       }
-        }).on('loaded', function(e) {
+    }).on('loaded', function(e) {
       map.fitBounds(e.target.getBounds());
       initialBounds = e.target.getBounds();
-      initialZoom = map.getZoom(); // <--- ДОБАВИЛИ ЭТО
+      initialZoom = map.getZoom();
     }).addTo(map);
 
-    // 2. БРОНЕБОЙНОЕ ЧТЕНИЕ ТОЧЕК: Сами скачиваем и парсим XML
+    // 2. БРОНЕБОЙНОЕ ЧТЕНИЕ ТОЧЕК
     fetch('/route.gpx')
       .then(response => response.text())
       .then(gpxText => {
         const parser = new DOMParser();
         const xmlDoc = parser.parseFromString(gpxText, "text/xml");
-        
-        // Ищем стандартные теги точек трека в GPX
         const trkpts = xmlDoc.querySelectorAll('trkpt');
-        console.log("1. Найдено точек в GPX файле:", trkpts.length);
         
-        if (trkpts.length === 0) {
-          console.log("ОШИБКА: В файле нет точек <trkpt>. Возможно, трек сохранен в другом формате.");
-          return;
-        }
+        if (trkpts.length === 0) return;
 
-        // Собираем координаты в массив, понятный Leaflet
         let trackPoints = [];
         trkpts.forEach(pt => {
           const lat = parseFloat(pt.getAttribute('lat'));
@@ -232,26 +230,20 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
         // 3. ФУНКЦИЯ ПОИСКА КИЛОМЕТРА
         function getCoordsAtKm(targetKm) {
           if (!targetKm || trackPoints.length === 0) return null;
-          
           let totalDist = 0;
           const targetDistMeters = targetKm * 1000;
-          
           for (let i = 1; i < trackPoints.length; i++) {
             const distBetween = trackPoints[i-1].distanceTo(trackPoints[i]);
-            
             if (totalDist + distBetween >= targetDistMeters) {
-              console.log(`2. Найден КМ ${targetKm}!`);
               return trackPoints[i];
             }
             totalDist += distBetween;
           }
-          console.log(`2. КМ ${targetKm} НЕ найден. Общая длина трека: ${Math.round(totalDist/1000)} км.`);
           return null;
         }
 
-        // 4. РАССТАНОВКА МАРКЕРОВ
+        // 4. РАССТАНОВКА МАРКЕРОВ И ЗУМ ПО КЛИКУ
         const postCards = document.querySelectorAll('.post-card[data-km]');
-        console.log("3. Найдено карточек с data-km:", postCards.length);
 
         postCards.forEach(card => {
           const km = parseFloat(card.getAttribute('data-km'));
@@ -259,29 +251,31 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
           if (!isNaN(km)) {
             const coords = getCoordsAtKm(km);
             
-                        if (coords) {
+            if (coords) {
               const marker = L.circleMarker(coords, {
-                radius: 4, // Было 8, стало 4 (в два раза меньше)
+                radius: 4,
                 fillColor: "#ff00dd",
                 color: "#fff",
-                weight: 1, // Сделал белую обводку чуть тоньше для маленькой точки
+                weight: 1,
                 opacity: 1,
                 fillOpacity: 0.8
               }).addTo(map);
               
-              // Убрали marker.bindPopup, больше никакой плашки!
               markers[km] = marker;
 
-                card.addEventListener('mouseenter', () => {
+              // ИЗМЕНЕНИЕ: Событие КЛИКА вместо наведения мыши
+              card.addEventListener('click', () => {
+                // Сначала сбрасываем размер ВСЕХ маркеров до 4
+                for (let key in markers) {
+                  markers[key].setStyle({ radius: 4 });
+                }
+                // Увеличиваем текущий маркер
                 marker.setStyle({ radius: 6 }); 
+                
+                // Умный зум
                 const autoZoom = initialZoom ? initialZoom + 2 : 14;
                 const targetZoom = Math.max(map.getZoom(), autoZoom);
                 map.flyTo(coords, targetZoom, { duration: 0.5 });
-              });
-
-              card.addEventListener('mouseleave', () => {
-                // При уходе мышки: возвращаем исходный размер
-                marker.setStyle({ radius: 4 }); 
               });
             }
           }
@@ -289,23 +283,24 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
       })
       .catch(err => console.error("Ошибка загрузки GPX:", err));
 
-            // Навешиваем Lightbox на все картинки в ленте
-      document.querySelectorAll('.post-text img').forEach(img => {
-        const src = img.getAttribute('src');
-        if (!src) return; // Защита от пустых картинок
-        // Оборачиваем картинку в ссылку для Lightbox
-        const link = document.createElement('a');
-        link.setAttribute('href', src);
-        link.className = 'glightbox';
-        link.setAttribute('data-glightbox', 'type: image'); // Говорим lightbox, что это картинка
-        img.parentNode.insertBefore(link, img);
-        link.appendChild(img);
-      });
+    // Навешиваем Lightbox на все картинки в ленте
+    document.querySelectorAll('.post-text img').forEach(img => {
+      const src = img.getAttribute('src');
+      if (!src) return; 
+      const link = document.createElement('a');
+      link.setAttribute('href', src);
+      link.className = 'glightbox';
+      link.setAttribute('data-glightbox', 'type: image');
+      img.parentNode.insertBefore(link, img);
+      link.appendChild(img);
+    });
       
-      const lightbox = GLightbox({
-        touchNavigation: true,
-        loop: true,
-      });
+    // ИЗМЕНЕНИЕ: Настройки Lightbox без листания
+    const lightbox = GLightbox({
+      touchNavigation: false, // откл свайп
+      loop: false, // откл цикл
+      zoomable: false
+    });
   </script>
 </body>
 </html>
