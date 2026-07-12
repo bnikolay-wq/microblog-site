@@ -202,10 +202,9 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
       const { Content } = await render(post);
 
       return (
-        <div class="post-card" data-km={post.data.km} data-coords={coords}>
+          <div class="post-card" data-coords={coords}>
           <div class="post-content">
             <div class="post-meta">
-              {post.data.km && <span class="km-badge">КМ: {post.data.km}</span>}
               <span>{dateStr}, {timeStr}</span>
               <span class="local-time">(местное время)</span>
             </div>
