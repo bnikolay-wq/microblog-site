@@ -225,8 +225,10 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     let initialBounds = null;
     let initialZoom = null;
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    L.tileLayer('https://mt{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', {
+      attribution: '&copy; Google Terrain',
+      subdomains: '0123', // Google использует 4 сервера для балансировки нагрузки
+      maxZoom: 20
     }).addTo(map);
 
     const markers = {};
@@ -247,6 +249,8 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     }).on('loaded', function(e) {
       map.fitBounds(e.target.getBounds());
       initialBounds = e.target.getBounds();
+      // Отдаляем зум на 1 шаг, чтобы было больше воздуха вокруг трека
+      map.setZoom(map.getZoom() - 1); 
       initialZoom = map.getZoom();
       document.getElementById('map').style.opacity = '1';
     }).addTo(map);
