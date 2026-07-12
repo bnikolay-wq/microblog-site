@@ -1,13 +1,10 @@
 ---
-// 1. ИМПОРТИРУЕМ НОВЫЕ МЕТОДЫ
 import { getCollection, render } from 'astro:content';
 
-// 2. ЗАБИРАЕМ ЗАМЕТКИ ИЗ КОЛЛЕКЦИИ 'blog'
 const allPosts = await getCollection('blog', ({ data }) => {
   return data.publish === true;
 });
 
-// 3. СОРТИРУЕМ (новые сверху)
 const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new Date(a.data.created).valueOf());
 ---
 
@@ -96,7 +93,6 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     flex-direction: column;
   }
 
-  /* ИЗМЕНЕНИЕ: Плашка километров теперь идет первой */
   .post-meta {
     font-size: 12px;
     color: #8e8e93;
@@ -104,7 +100,7 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     display: flex;
     align-items: center;
     gap: 8px;
-    flex-wrap: wrap; /* Чтобы на мобилке переносилось красиво, если места мало */
+    flex-wrap: wrap;
   }
 
   .km-badge {
@@ -117,10 +113,9 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     line-height: 1;
   }
 
-  /* НОВОЕ: Стиль для приписки (местное время) */
   .local-time {
     font-size: 10px;
-    color: #b0b0b0; /* Чуть более тусклый */
+    color: #b0b0b0;
   }
 
   .post-text {
@@ -201,13 +196,15 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
       const timeStr = date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
       const dateStr = date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
 
+      // Преобразуем массив координат в строку для data-атрибута
+      const coords = post.data.coordinates ? JSON.stringify(post.data.coordinates) : null;
+
       const { Content } = await render(post);
 
       return (
-        <div class="post-card" data-km={post.data.km}>
+        <div class="post-card" data-km={post.data.km} data-coords={coords}>
           <div class="post-content">
             <div class="post-meta">
-              {/* ИЗМЕНЕНИЕ: Плашка первая, затем дата, затем приписка */}
               {post.data.km && <span class="km-badge">КМ: {post.data.km}</span>}
               <span>{dateStr}, {timeStr}</span>
               <span class="local-time">(местное время)</span>
@@ -235,6 +232,7 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
 
     const markers = {};
 
+    // 1. ВИЗУАЛЬНАЯ ОТРИСОВКА ТРЕКА (Только линия!)
     new L.GPX('/route.gpx', {
       async: true,
       polyline_options: {
@@ -254,92 +252,73 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
       document.getElementById('map').style.opacity = '1';
     }).addTo(map);
 
-    fetch('/route.gpx')
-      .then(response => response.text())
-      .then(gpxText => {
-        const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(gpxText, "text/xml");
-        const trkpts = xmlDoc.querySelectorAll('trkpt');
-        
-        if (trkpts.length === 0) return;
+    // 2. РАССТАНОВКА МАРКЕРОВ ПО GPS (Бронебойно и просто)
+    const postCards = document.querySelectorAll('.post-card[data-coords]');
 
-        let trackPoints = [];
-        trkpts.forEach(pt => {
-          const lat = parseFloat(pt.getAttribute('lat'));
-          const lon = parseFloat(pt.getAttribute('lon'));
+    postCards.forEach(card => {
+      const coordsStr = card.getAttribute('data-coords');
+      if (!coordsStr || coordsStr === 'null') return;
+
+      try {
+        const arr = JSON.parse(coordsStr);
+        // Плагин пишет массив строк: ["55.96", "37.42"]
+        if (Array.isArray(arr) && arr.length >= 2) {
+          const lat = parseFloat(arr[0]);
+          const lon = parseFloat(arr[1]);
+
           if (!isNaN(lat) && !isNaN(lon)) {
-            trackPoints.push(L.latLng(lat, lon));
-          }
-        });
-
-        function getCoordsAtKm(targetKm) {
-          if (!targetKm || trackPoints.length === 0) return null;
-          let totalDist = 0;
-          const targetDistMeters = targetKm * 1000;
-          for (let i = 1; i < trackPoints.length; i++) {
-            const distBetween = trackPoints[i-1].distanceTo(trackPoints[i]);
-            if (totalDist + distBetween >= targetDistMeters) {
-              return trackPoints[i];
-            }
-            totalDist += distBetween;
-          }
-          return null;
-        }
-
-        const postCards = document.querySelectorAll('.post-card[data-km]');
-
-        postCards.forEach(card => {
-          const km = parseFloat(card.getAttribute('data-km'));
-          
-          if (!isNaN(km)) {
-            const coords = getCoordsAtKm(km);
+            const coords = L.latLng(lat, lon);
             
-            if (coords) {
-              const marker = L.circleMarker(coords, {
-                pane: 'markerPane', 
-                radius: 5,          
-                fillColor: "#ff00dd",
-                color: "#fff",
-                weight: 1,
-                opacity: 1,
-                fillOpacity: 0.8
-              }).addTo(map);
+            const marker = L.circleMarker(coords, {
+              pane: 'markerPane', 
+              radius: 5,          
+              fillColor: "#ff00dd",
+              color: "#fff",
+              weight: 1,
+              opacity: 1,
+              fillOpacity: 0.8
+            }).addTo(map);
+            
+            const key = `${lat},${lon}`;
+            markers[key] = marker;
+
+            // Связь 1: Клик по карточке -> зум к метке
+            card.addEventListener('click', () => {
+              for (let key in markers) {
+                markers[key].setStyle({ radius: 5 });
+              }
+              marker.setStyle({ radius: 8 }); 
               
-              markers[km] = marker;
+              const autoZoom = initialZoom ? initialZoom + 2 : 14;
+              const targetZoom = Math.max(map.getZoom(), autoZoom);
+              map.flyTo(coords, targetZoom, { duration: 0.5 });
+            });
 
-              card.addEventListener('click', () => {
-                for (let key in markers) {
-                  markers[key].setStyle({ radius: 5 });
-                }
-                marker.setStyle({ radius: 8 }); 
-                
-                const autoZoom = initialZoom ? initialZoom + 2 : 14;
-                const targetZoom = Math.max(map.getZoom(), autoZoom);
-                map.flyTo(coords, targetZoom, { duration: 0.5 });
-              });
+            // Связь 2: Клик по метке -> скролл ленты к карточке
+            marker.on('click', () => {
+              for (let key in markers) {
+                markers[key].setStyle({ radius: 5 });
+              }
+              marker.setStyle({ radius: 8 });
 
-              marker.on('click', () => {
-                for (let key in markers) {
-                  markers[key].setStyle({ radius: 5 });
-                }
-                marker.setStyle({ radius: 8 });
+              card.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-                card.style.borderColor = 'rgba(255, 0, 221, 0.5)';
-                card.style.boxShadow = '0 0 8px rgba(255, 0, 221, 0.3)';
-                
-                setTimeout(() => {
-                  card.style.borderColor = '#e5e5e5';
-                  card.style.boxShadow = 'none';
-                }, 1500);
-              });
-            }
+              card.style.borderColor = 'rgba(255, 0, 221, 0.5)';
+              card.style.boxShadow = '0 0 8px rgba(255, 0, 221, 0.3)';
+              
+              setTimeout(() => {
+                card.style.borderColor = '#e5e5e5';
+                card.style.boxShadow = 'none';
+              }, 1500);
+            });
           }
-        });
-      })
-      .catch(err => console.error("Ошибка загрузки GPX:", err));
+        }
+      } catch(e) {
+        console.error("Ошибка парсинга координат", e);
+      }
+    });
 
+    // Перенос картинок в превью
     document.querySelectorAll('.post-card').forEach(card => {
       const images = card.querySelectorAll('.post-text img');
       const thumb = card.querySelector('.post-thumb');
@@ -347,14 +326,12 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
       if (images.length > 0 && thumb) {
         images.forEach(img => {
           img.style.display = 'block';
-          
           const src = img.getAttribute('src');
           if (src) {
             const link = document.createElement('a');
             link.setAttribute('href', src);
             link.className = 'glightbox';
             link.setAttribute('data-glightbox', 'type: image');
-            
             img.parentNode.insertBefore(link, img);
             link.appendChild(img);
             thumb.appendChild(link);
@@ -369,6 +346,7 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
       zoomable: false
     });
 
+    // Логика ресайза
     const resizer = document.getElementById('resizer');
     const mapEl = document.getElementById('map');
     let isResizing = false;
@@ -381,13 +359,10 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
 
     document.addEventListener('mousemove', (e) => {
       if (!isResizing) return;
-      
       const windowWidth = window.innerWidth;
       let newWidth = (e.clientX / windowWidth) * 100;
-
       if (newWidth < 15) newWidth = 15;
       if (newWidth > 85) newWidth = 85;
-
       mapEl.style.width = newWidth + '%';
       map.invalidateSize();
     });

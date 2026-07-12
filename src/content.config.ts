@@ -19,6 +19,7 @@ const blogCollection = defineCollection({
     publish: z.boolean(),
     km: z.coerce.number().optional(),
     tags: z.array(z.string()).optional(),
+    coordinates: z.array(z.any()).optional()
   }),
 });
 
