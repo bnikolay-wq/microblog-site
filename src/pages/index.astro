@@ -199,7 +199,7 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     {posts.map(async (post) => {
       const date = new Date(post.data.created);
       const timeStr = date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-      const dateStr = date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+      const dateStr = date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
 
       const { Content } = await render(post);
 
