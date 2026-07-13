@@ -24,18 +24,11 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   
-  <!-- ПОДКЛЮЧАЕМ ВИДЖЕТ ЛАЙКОВ LYKET -->
-  <script is:inline src="https://unpkg.com/@lyket/widget@latest/dist/index.js"></script>
+  <!-- ПОДКЛЮЧАЕМ ВИДЖЕТ ЛАЙКОВ LYKET (С API КЛЮЧОМ В URL) -->
+  <script is:inline src="https://unpkg.com/@lyket/widget@latest/dist/lyket.js?apiKey=pt_3c87920e5f05723ef33e7e4bb3e216"></script>
 </head>
 
 <body>
-  <!-- ИНИЦИАЛИЗАЦИЯ LYKET С ТВОИМ КЛЮЧОМ -->
-  <script is:inline>
-    window.lyketOptions = {
-      apiKey: "pt_3c87920e5f05723ef33e7e4bb3e216"
-    };
-  </script>
-
   <style is:global>
   body {
     margin: 0;
@@ -127,7 +120,7 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     font-size: 14px;
     line-height: 1.4; 
     color: #111111;
-    flex: 1; /* Занимает всё доступное место, прижимая лайк книзу */
+    flex: 1; 
     display: flex;
     align-items: center;
   }
