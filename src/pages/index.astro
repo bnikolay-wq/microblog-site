@@ -1,10 +1,13 @@
 ---
+// 1. ИМПОРТИРУЕМ МЕТОДЫ
 import { getCollection, render } from 'astro:content';
 
+// 2. ЗАБИРАЕМ ЗАМЕТКИ ИЗ КОЛЛЕКЦИИ 'blog'
 const allPosts = await getCollection('blog', ({ data }) => {
   return data.publish === true;
 });
 
+// 3. СОРТИРУЕМ (новые сверху)
 const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new Date(a.data.created).valueOf());
 ---
 
@@ -103,16 +106,6 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     flex-wrap: wrap;
   }
 
-  .km-badge {
-    background: #ffd900; 
-    color: #ff00dd; 
-    padding: 3px 8px;
-    border-radius: 0 !important;
-    font-size: 11px;
-    font-weight: 600;
-    line-height: 1;
-  }
-
   .local-time {
     font-size: 10px;
     color: #b0b0b0;
@@ -167,6 +160,17 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     display: none !important;
   }
 
+  /* Кастомные маркеры старта и финиша */
+  .start-finish-marker {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+  }
+  .start-marker { background: #00cc44; } /* Зеленый старт */
+  .end-marker { background: #ff3333; }   /* Красный финиш */
+
   @media (max-width: 768px) {
     body {
       flex-direction: column;
@@ -196,13 +200,12 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
       const timeStr = date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
       const dateStr = date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
 
-      // Преобразуем массив координат в строку для data-атрибута
       const coords = post.data.coordinates ? JSON.stringify(post.data.coordinates) : null;
 
       const { Content } = await render(post);
 
       return (
-          <div class="post-card" data-coords={coords}>
+        <div class="post-card" data-coords={coords}>
           <div class="post-content">
             <div class="post-meta">
               <span>{dateStr}, {timeStr}</span>
@@ -225,37 +228,80 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     let initialBounds = null;
     let initialZoom = null;
 
+    // ПОДЛОЖКА GOOGLE TERRAIN
     L.tileLayer('https://mt{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', {
       attribution: '&copy; Google Terrain',
-      subdomains: '0123', // Google использует 4 сервера для балансировки нагрузки
+      subdomains: '0123',
       maxZoom: 20
     }).addTo(map);
 
     const markers = {};
 
-    // 1. ВИЗУАЛЬНАЯ ОТРИСОВКА ТРЕКА (Только линия!)
+    // ВИЗУАЛЬНАЯ ОТРИСОВКА ТРЕКА (Без стандартных иконок)
     new L.GPX('/route.gpx', {
       async: true,
       polyline_options: {
-        color: '#ffdd1a',
+        color: '#ffd900',
         weight: 4,        
         opacity: 0.8      
       },
       marker_options: {
-        startIconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.7.0/pin-icon-start.png',
-        endIconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.7.0/pin-icon-end.png', 
-        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.7.0/pin-shadow.png'
+        startIconUrl: null, 
+        endIconUrl: null,
+        shadowUrl: null
       }
     }).on('loaded', function(e) {
       map.fitBounds(e.target.getBounds());
       initialBounds = e.target.getBounds();
-      // Отдаляем зум на 1 шаг, чтобы было больше воздуха вокруг трека
-      map.setZoom(map.getZoom() - 1); 
+      map.setZoom(map.getZoom() - 1); // Отдаляем зум на 1 шаг
       initialZoom = map.getZoom();
       document.getElementById('map').style.opacity = '1';
     }).addTo(map);
 
-    // 2. РАССТАНОВКА МАРКЕРОВ ПО GPS (Бронебойно и просто)
+    // БРОНЕБОЙНОЕ ЧТЕНИЕ ТОЧЕК ДЛЯ СТАРТА/ФИНИША
+    fetch('/route.gpx')
+      .then(response => response.text())
+      .then(gpxText => {
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(gpxText, "text/xml");
+        const trkpts = xmlDoc.querySelectorAll('trkpt');
+        
+        if (trkpts.length === 0) return;
+
+        let trackPoints = [];
+        trkpts.forEach(pt => {
+          const lat = parseFloat(pt.getAttribute('lat'));
+          const lon = parseFloat(pt.getAttribute('lon'));
+          if (!isNaN(lat) && !isNaN(lon)) {
+            trackPoints.push(L.latLng(lat, lon));
+          }
+        });
+
+        // СТАВИМ КАСТОМНЫЕ МАРКЕРЫ СТАРТА И ФИНИША
+        if (trackPoints.length > 0) {
+          const startPoint = trackPoints[0];
+          const endPoint = trackPoints[trackPoints.length - 1];
+
+          const startIcon = L.divIcon({
+            className: '', 
+            html: '<div class="start-finish-marker start-marker"></div>',
+            iconSize: [12, 12],
+            iconAnchor: [6, 6]
+          });
+          const endIcon = L.divIcon({
+            className: '', 
+            html: '<div class="start-finish-marker end-marker"></div>',
+            iconSize: [12, 12],
+            iconAnchor: [6, 6]
+          });
+
+          L.marker(startPoint, { icon: startIcon, pane: 'markerPane' }).addTo(map);
+          L.marker(endPoint, { icon: endIcon, pane: 'markerPane' }).addTo(map);
+        }
+      })
+      .catch(err => console.error("Ошибка загрузки GPX:", err));
+
+    // РАССТАНОВКА МАРКЕРОВ ЗАМЕТОК ПО GPS
     const postCards = document.querySelectorAll('.post-card[data-coords]');
 
     postCards.forEach(card => {
@@ -264,7 +310,6 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
 
       try {
         const arr = JSON.parse(coordsStr);
-        // Плагин пишет массив строк: ["55.96", "37.42"]
         if (Array.isArray(arr) && arr.length >= 2) {
           const lat = parseFloat(arr[0]);
           const lon = parseFloat(arr[1]);
@@ -285,7 +330,7 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
             const key = `${lat},${lon}`;
             markers[key] = marker;
 
-            // Связь 1: Клик по карточке -> зум к метке
+            // СВЯЗЬ 1: Клик по карточке -> зум к метке
             card.addEventListener('click', () => {
               for (let key in markers) {
                 markers[key].setStyle({ radius: 5 });
@@ -297,7 +342,7 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
               map.flyTo(coords, targetZoom, { duration: 0.5 });
             });
 
-            // Связь 2: Клик по метке -> скролл ленты к карточке
+            // СВЯЗЬ 2: Клик по метке -> скролл ленты к карточке
             marker.on('click', () => {
               for (let key in markers) {
                 markers[key].setStyle({ radius: 5 });
