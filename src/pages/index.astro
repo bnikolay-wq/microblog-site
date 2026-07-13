@@ -134,10 +134,12 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     display: none;
   }
 
-  /* Контейнер для кнопки лайк (левый нижний угол) */
+    /* Контейнер для кнопки лайк (левый нижний угол) */
   .like-container {
     margin-top: 4px;
-    align-self: flex-start; /* Прижимает строго влево */
+    align-self: flex-start;
+    border: 2px solid red; /* ВРЕМЕННО: красная рамка для проверки */
+    min-height: 30px;      /* ВРЕМЕННО: чтобы рамка не схлопывалась */
   }
 
   .post-thumb {
