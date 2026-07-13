@@ -23,6 +23,18 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- ПОДКЛЮЧАЕМ ВИДЖЕТ ЛАЙКОВ LYKET -->
+  <script src="https://unpkg.com/@lyket/widget@latest/dist/index.js"></script>
+</head>
+
+<body>
+  <!-- ИНИЦИАЛИЗАЦИЯ LYKET С ТВОИМ КЛЮЧОМ -->
+  <script is:inline>
+    window.lyketOptions = {
+      apiKey: "pt_3c87920e5f05723ef33e7e4bb3e216"
+    };
+  </script>
 
   <style is:global>
   body {
@@ -115,7 +127,7 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     font-size: 14px;
     line-height: 1.4; 
     color: #111111;
-    flex: 1;
+    flex: 1; /* Занимает всё доступное место, прижимая лайк книзу */
     display: flex;
     align-items: center;
   }
@@ -127,6 +139,12 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
 
   .post-text img {
     display: none;
+  }
+
+  /* Контейнер для кнопки лайк (левый нижний угол) */
+  .like-container {
+    margin-top: 4px;
+    align-self: flex-start; /* Прижимает строго влево */
   }
 
   .post-thumb {
@@ -168,8 +186,8 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     border: 2px solid white;
     box-shadow: 0 1px 4px rgba(0,0,0,0.4);
   }
-  .start-marker { background: #00cc44; } /* Зеленый старт */
-  .end-marker { background: #ff3333; }   /* Красный финиш */
+  .start-marker { background: #00cc44; } 
+  .end-marker { background: #ff3333; }   
 
   @media (max-width: 768px) {
     body {
@@ -188,8 +206,6 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     }
   }
 </style>
-</head>
-<body>
 
   <div id="map"></div>
   <div id="resizer"></div>
@@ -204,6 +220,9 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
 
       const { Content } = await render(post);
 
+      // Уникальный ID для лайков на основе времени создания
+      const likeId = `pamir-${date.getTime()}`;
+
       return (
         <div class="post-card" data-coords={coords}>
           <div class="post-content">
@@ -212,6 +231,15 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
               <span class="local-time">(местное время)</span>
             </div>
             <div class="post-text"><Content /></div>
+            
+            {/* КНОПКА ЛАЙК ОТ LYKET */}
+            <div class="like-container">
+              <lyket-like 
+                id={likeId} 
+                namespace="pamir-fun"
+              ></lyket-like>
+            </div>
+
           </div>
           <div class="post-thumb"></div>
         </div>
@@ -228,7 +256,6 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     let initialBounds = null;
     let initialZoom = null;
 
-    // ПОДЛОЖКА GOOGLE TERRAIN
     L.tileLayer('https://mt{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', {
       attribution: '&copy; Google Terrain',
       subdomains: '0123',
@@ -237,7 +264,6 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
 
     const markers = {};
 
-    // ВИЗУАЛЬНАЯ ОТРИСОВКА ТРЕКА (Без стандартных иконок)
     new L.GPX('/route.gpx', {
       async: true,
       polyline_options: {
@@ -253,12 +279,11 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     }).on('loaded', function(e) {
       map.fitBounds(e.target.getBounds());
       initialBounds = e.target.getBounds();
-      map.setZoom(map.getZoom() - 1); // Отдаляем зум на 1 шаг
+      map.setZoom(map.getZoom() - 1); 
       initialZoom = map.getZoom();
       document.getElementById('map').style.opacity = '1';
     }).addTo(map);
 
-    // БРОНЕБОЙНОЕ ЧТЕНИЕ ТОЧЕК ДЛЯ СТАРТА/ФИНИША
     fetch('/route.gpx')
       .then(response => response.text())
       .then(gpxText => {
@@ -277,7 +302,6 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
           }
         });
 
-        // СТАВИМ КАСТОМНЫЕ МАРКЕРЫ СТАРТА И ФИНИША
         if (trackPoints.length > 0) {
           const startPoint = trackPoints[0];
           const endPoint = trackPoints[trackPoints.length - 1];
@@ -301,7 +325,6 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
       })
       .catch(err => console.error("Ошибка загрузки GPX:", err));
 
-    // РАССТАНОВКА МАРКЕРОВ ЗАМЕТОК ПО GPS
     const postCards = document.querySelectorAll('.post-card[data-coords]');
 
     postCards.forEach(card => {
@@ -330,7 +353,6 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
             const key = `${lat},${lon}`;
             markers[key] = marker;
 
-            // СВЯЗЬ 1: Клик по карточке -> зум к метке
             card.addEventListener('click', () => {
               for (let key in markers) {
                 markers[key].setStyle({ radius: 5 });
@@ -342,7 +364,6 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
               map.flyTo(coords, targetZoom, { duration: 0.5 });
             });
 
-            // СВЯЗЬ 2: Клик по метке -> скролл ленты к карточке
             marker.on('click', () => {
               for (let key in markers) {
                 markers[key].setStyle({ radius: 5 });
@@ -366,7 +387,6 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
       }
     });
 
-    // Перенос картинок в превью
     document.querySelectorAll('.post-card').forEach(card => {
       const images = card.querySelectorAll('.post-text img');
       const thumb = card.querySelector('.post-thumb');
@@ -394,7 +414,6 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
       zoomable: false
     });
 
-    // Логика ресайза
     const resizer = document.getElementById('resizer');
     const mapEl = document.getElementById('map');
     let isResizing = false;
