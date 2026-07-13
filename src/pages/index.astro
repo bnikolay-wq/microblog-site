@@ -1,13 +1,10 @@
 ---
-// 1. ИМПОРТИРУЕМ МЕТОДЫ
 import { getCollection, render } from 'astro:content';
 
-// 2. ЗАБИРАЕМ ЗАМЕТКИ ИЗ КОЛЛЕКЦИИ 'blog'
 const allPosts = await getCollection('blog', ({ data }) => {
   return data.publish === true;
 });
 
-// 3. СОРТИРУЕМ (новые сверху)
 const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new Date(a.data.created).valueOf());
 ---
 
@@ -23,9 +20,6 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  
-  <!-- ПОДКЛЮЧАЕМ ВИДЖЕТ ЛАЙКОВ LYKET (С API КЛЮЧОМ В URL) -->
-  <script is:inline src="https://unpkg.com/@lyket/widget@latest/dist/lyket.js?apiKey=pt_3c87920e5f05723ef33e7e4bb3e216"></script>
 </head>
 
 <body>
@@ -134,14 +128,6 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
     display: none;
   }
 
-    /* Контейнер для кнопки лайк (левый нижний угол) */
-  .like-container {
-    margin-top: 4px;
-    align-self: flex-start;
-    border: 2px solid red; /* ВРЕМЕННО: красная рамка для проверки */
-    min-height: 30px;      /* ВРЕМЕННО: чтобы рамка не схлопывалась */
-  }
-
   .post-thumb {
     display: flex;
     flex-direction: column;
@@ -212,11 +198,7 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
       const dateStr = date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
 
       const coords = post.data.coordinates ? JSON.stringify(post.data.coordinates) : null;
-
       const { Content } = await render(post);
-
-      // Уникальный ID для лайков на основе времени создания
-      const likeId = `pamir-${date.getTime()}`;
 
       return (
         <div class="post-card" data-coords={coords}>
@@ -226,15 +208,6 @@ const posts = allPosts.sort((a, b) => new Date(b.data.created).valueOf() - new D
               <span class="local-time">(местное время)</span>
             </div>
             <div class="post-text"><Content /></div>
-            
-            {/* КНОПКА ЛАЙК ОТ LYKET */}
-            <div class="like-container">
-              <lyket-like 
-                id={likeId} 
-                namespace="pamir-fun"
-              ></lyket-like>
-            </div>
-
           </div>
           <div class="post-thumb"></div>
         </div>
